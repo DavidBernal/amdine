@@ -101,5 +101,6 @@ For more examples look examples folder
 ## TODO
 
 - Improve documentation
+- Add examples with tests
 - Add examples with typescript
 - Add examples with jsdocs
