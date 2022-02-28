@@ -1,6 +1,20 @@
 {
   "name": "amdine",
-  "version": "0.1.0",
-  "main": "index.js",
-  "license": "MIT"
+  "version": "1.0.0",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf dist && tsc"
+  },
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "globby": "^13.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.5",
+    "@types/node": "^17.0.21"
+  }
 }

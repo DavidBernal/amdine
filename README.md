@@ -1,106 +1,72 @@
 # amdine (WIP)
 
-amdine is a dependency resolution for nodeJs. 
+amdine is a dependency resolution for nodeJs.
 
 ## Why
 
 I think that resolve dependencies based on path (`require("../whatever")`) is a bad idea, cause is difficult mock.
 This library try to solve doing resolution based on name, with AMD flavour (not in deep).
 
-## How to initialize 
+## How to initialize
 
 With default config:
 
-``` node -r amdine index.js ```
-
+`node -r amdine index.js`
 
 With custom config:
 
 ```js
-const { configure } = require('amdine');
+import amdine from 'amdine';
 
-configure({
-  root: './packages', // folder where our modules are located
-  deps: { 
-    // if you want to override some module
-  },
-});
-
-require('./entrypoint');
-
+amdine.init();
+// OR
+const options = {
+  glob?: '*/**/*.(j|t)s' // default value
+};
+amdine.init(options);
 ```
 
 ## How to use
 
-This module provides a global function called "define". 
-`Define` accept 1 or 2 parameters. If are 2, 1st will be array of dependencies and 2nd will be factory function.
-If is only 1:
-  1) if is a factory function, will be called
-  2) if is another thing, this thing will be the value of module
+`define` function needs 2 parameters. The 1st param will be the name of the package. The 2nd will be factory function or direct value.
 
-Exmaples:
-```js
-define(['dep1', 'dep2'], function (dep1, dep2) {});
+`defineWithDependencies` function needs 3 parameters.
+The 1st param will be the name of the package.
+The 2nd will be the list of dependencies.
+The 3rd will be factory function with dependencies received as param in the same order.
 
-define(function(){ return {} as myModule });
-
-define({value: 'hello'});
-
-define(42);
-```
-
-### Exmaple 1
-Simple usage:
-```js 
-// entrypoint.js
-
-define([], function(){
-  // do somthing
-})
-```
-
-### Exmaple 2
-Declaring package:
-```js 
-// ./apckages/logger.js
-
-define([], function(){
-  return {log: console.log}
-})
-```
-
-Now use it:
-```js
-define(['logger'], function(logger){
-  // logger = console.log
-})
-```
-
-### Example 3
-
-Async module:
+Examples:
 
 ```js
-// ./packages/async/data
-define([], async function(){
-  const data = await fetch('fake-server');
-  return data;
-})
-```
+define('my-object', function(){ return {} as myModule });
 
-Consume:
-```js
-define(['async/data'], function(data) {
-  // data = object from server
-})
+define('my-object', {value: 'hello'});
+
+define('my-number', 42);
+
+define('logger', function () {
+  return { log: console.log };
+});
+
+defineWithDependencies('my-task', ['logger'], function (logger) {
+  logger.log('hello in task');
+});
+
+define('state', function () {
+  function createState(){
+    const state = {};
+    function setState(newState) {
+      state = newState;
+    }
+    return [state, setState];
+  }
+  return createState;
+});
+
+defineWithDependencies('my-mod', ['state', 'logger'], function (createState, logger) {
+  const [ state, setState ] = createState;
+  logger.log(state);
+});
 ```
 
 For more examples look examples folder
-
-
-## TODO
-
-- Improve documentation
-- Add examples with tests
-- Add examples with typescript
-- Add examples with jsdocs
