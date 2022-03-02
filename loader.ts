@@ -1,4 +1,4 @@
-import amdine from './index';
+import amdine from './define';
 import { globby } from 'globby';
 import { join } from 'path';
 
