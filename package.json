@@ -1,12 +1,14 @@
 {
   "name": "amdine",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "files": [
-    "dist"
+    "dist/*.js"
   ],
   "main": "dist/index.js",
   "scripts": {
-    "build": "rm -rf dist && tsc"
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc",
+    "push": "npm run build && npm publish && npm run clean"
   },
   "license": "MIT",
   "type": "module",

@@ -1,17 +1,24 @@
-import { globby } from 'globby';
-import { join } from 'path';
-
 const amdine = (function () {
   //#region types
-  type ModuleWithDependenciesDefinition = [name: string, dependencies: string[], factory: Function];
+  type ModuleWithDependenciesDefinition = [
+    name: string,
+    dependencies: string[],
+    factory: Function
+  ];
   type Module = string | number | boolean | object | symbol;
-  type InitOptions = { glob?: string };
 
   /** Possible Params signature */
   type UnnamedModule = [factory: Function];
   type NamedModule = [name: string, factoryOrValue: Function | Module];
-  type UnnamedModuleWithDependencies = [dependencies: string[], factory: Function];
-  type NamedModuleWithDependencies = [name: string, dependencies: string[], factory: Function];
+  type UnnamedModuleWithDependencies = [
+    dependencies: string[],
+    factory: Function
+  ];
+  type NamedModuleWithDependencies = [
+    name: string,
+    dependencies: string[],
+    factory: Function
+  ];
 
   type Params =
     | NamedModule
@@ -27,15 +34,22 @@ const amdine = (function () {
   }
 
   function isNamedModule(m: Params): m is NamedModule {
-    return typeof m[0] === 'string' && typeof m[1] === 'function';
+    return m.length === 2 && typeof m[0] === 'string';
   }
 
   function isUnnamedModuleWithDependencies(m: Params): m is UnnamedModule {
     return Array.isArray(m[0]) && typeof m[1] === 'function';
   }
 
-  function isNamedModuleWithDependencies(m: Params): m is NamedModuleWithDependencies {
-    return (m.length === 3 && typeof m[0] === 'string' && Array.isArray(m[1]) && typeof m[2] === 'function');
+  function isNamedModuleWithDependencies(
+    m: Params
+  ): m is NamedModuleWithDependencies {
+    return (
+      m.length === 3 &&
+      typeof m[0] === 'string' &&
+      Array.isArray(m[1]) &&
+      typeof m[2] === 'function'
+    );
   }
   //#endregion
 
@@ -62,21 +76,28 @@ const amdine = (function () {
   }
 
   async function defineNamedModule([name, value]: NamedModule) {
-    namedModules.push(async () => {
-      if (value instanceof Function) {
-        dependencies[name] = await value();
-      } else {
-        dependencies[name] = value;
-      }
-    });
+    if (value instanceof Function) {
+      namedModules.push((async () => (dependencies[name] = await value()))());
+    } else {
+      dependencies[name] = value;
+    }
   }
 
-  async function defineNamedModuleWithDependencies([name,deps,factory]: NamedModuleWithDependencies) {
+  async function defineNamedModuleWithDependencies([
+    name,
+    deps,
+    factory,
+  ]: NamedModuleWithDependencies) {
     namedModulesWithDependencies.push([name, deps, factory]);
   }
 
-  function defineUnnamedModuleWithDependencies([deps,factory]: UnnamedModuleWithDependencies) {
-    unnamedModulesWithDependencies.push(factory(...deps.map((dep) => dependencies[dep])));
+  function defineUnnamedModuleWithDependencies([
+    deps,
+    factory,
+  ]: UnnamedModuleWithDependencies) {
+    unnamedModulesWithDependencies.push(
+      factory(...deps.map((dep) => dependencies[dep]))
+    );
   }
 
   //#endregion
@@ -91,19 +112,6 @@ const amdine = (function () {
       defineUnnamedModuleWithDependencies(args);
     } else if (isNamedModuleWithDependencies(args)) {
       defineNamedModuleWithDependencies(args);
-    }
-  }
-
-  async function discovery(options: InitOptions = {}) {
-    const glob = options.glob || '*/**/*.(j|t)s';
-    const paths = await globby([glob, '!node_modules/**/*', '!**/*.d.ts'], {
-      cwd: process.cwd(),
-      expandDirectories: { extensions: ['ts', 'js'] },
-    });
-
-    for await (const p of paths) {
-      console.log('importing ', './' + p);
-      await import(join(process.cwd(), p));
     }
   }
 
@@ -152,16 +160,11 @@ const amdine = (function () {
     await Promise.all(unnamedModulesWithDependencies);
   }
 
-  function discoveryAndInit(options: InitOptions = {}) {
-    discovery(options).then(() => init());
-  }
   //#endregion
 
-  return { define, init, discovery, discoveryAndInit };
+  return { define, init };
 })();
 
 export default amdine;
 export const init = amdine.init;
-export const discovery = amdine.discovery;
-export const discoveryAndInit = amdine.discoveryAndInit;
 export const define = amdine.define;
