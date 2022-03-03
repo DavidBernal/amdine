@@ -71,13 +71,13 @@ const amdine = (function () {
   //#endregion
 
   //#region private methods
-  async function defineUnnamedModule([factory]: UnnamedModule) {
-    unnamedModules.push(factory());
+  async function defineUnnamedModule([factory]: UnnamedModule): Promise<void> {
+    unnamedModules.push(() => factory());
   }
 
-  async function defineNamedModule([name, value]: NamedModule) {
+  async function defineNamedModule([name, value]: NamedModule): Promise<void> {
     if (value instanceof Function) {
-      namedModules.push((async () => (dependencies[name] = await value()))());
+      namedModules.push(async () => (dependencies[name] = await value()));
     } else {
       dependencies[name] = value;
     }
@@ -87,23 +87,28 @@ const amdine = (function () {
     name,
     deps,
     factory,
-  ]: NamedModuleWithDependencies) {
+  ]: NamedModuleWithDependencies): Promise<void> {
     namedModulesWithDependencies.push([name, deps, factory]);
   }
 
   function defineUnnamedModuleWithDependencies([
     deps,
     factory,
-  ]: UnnamedModuleWithDependencies) {
-    unnamedModulesWithDependencies.push(
+  ]: UnnamedModuleWithDependencies): void {
+    unnamedModulesWithDependencies.push(() =>
       factory(...deps.map((dep) => dependencies[dep]))
     );
+  }
+
+  function resolve(fns: Function[]) {
+    return Promise.all(fns.map((fn) => fn()));
   }
 
   //#endregion
 
   //#region public methods
-  async function define(...args: Params) {
+  async function define(...args: Params): Promise<void> {
+    debugger;
     if (isNamedModule(args)) {
       defineNamedModule(args);
     } else if (isUnnamedModule(args)) {
@@ -116,9 +121,12 @@ const amdine = (function () {
   }
 
   // TODO: Improve algorithm to verify first if all dependencies are satisfied
-  async function init() {
-    await Promise.all(unnamedModules);
-    await Promise.all(namedModules);
+  async function init(): Promise<void> {
+    debugger;
+
+    await resolve(unnamedModules);
+
+    await resolve(namedModules);
 
     let i = namedModulesWithDependencies.length;
     let completeRound = i * i;
@@ -149,15 +157,16 @@ const amdine = (function () {
             'Modules no resolved: ',
             namedModulesWithDependencies.map(([n]) => n).join(',')
           );
-
-          process.exit(1);
+          throw new Error(
+            'Circular dependency detected or missing dependencies'
+          );
         }
         i = namedModulesWithDependencies.length;
         completeRound = i * i;
       }
     }
 
-    await Promise.all(unnamedModulesWithDependencies);
+    await resolve(unnamedModulesWithDependencies);
   }
 
   //#endregion
@@ -166,5 +175,4 @@ const amdine = (function () {
 })();
 
 export default amdine;
-export const init = amdine.init;
 export const define = amdine.define;
