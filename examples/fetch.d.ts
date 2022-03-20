@@ -1,1 +1,0 @@
-type Fetch = () => Promise<any>;

@@ -1,10 +1,13 @@
 import amdine from '../index';
+import type { Fetch } from './fetch';
 
-amdine.defineWithDependencies(
+export type Data = JSON;
+
+amdine.define(
   'data',
   ['fetch'],
-  async function data(fetch: Fetch) {
+  async function data(fetch: Fetch): Promise<Data> {
     const data = await fetch();
-    return data;
+    return data as Data;
   }
 );

@@ -2,7 +2,9 @@
 import amdine from '../index';
 import json from './data.json';
 
-amdine.define('fetch', function () {
+export type Fetch = () => Promise<any>;
+
+amdine.define('fetch', function (): Fetch {
   return () => {
     console.log('Fetch Module: Getting data with delay');
     return new Promise((resolve, reject) => {

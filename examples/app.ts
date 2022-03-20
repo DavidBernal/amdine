@@ -1,7 +1,8 @@
 import amdine from '../index';
+import { Data } from './data';
 
 type Program = void;
 
-amdine.defineWithDependencies('app', ['data'], function (data) {
-  console.log(`Rockets: ${data.count}`);
+amdine.define('app', ['data'], function (data: Data) {
+  console.log(`Rockets: ${data['count']}`);
 });
