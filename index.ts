@@ -71,6 +71,7 @@ const amdine = (function () {
   //#endregion
 
   //#region private methods
+  let loaded = false;
   async function defineUnnamedModule([factory]: UnnamedModule): Promise<void> {
     unnamedModules.push(() => factory());
   }
@@ -122,10 +123,7 @@ const amdine = (function () {
 
   // TODO: Improve algorithm to verify first if all dependencies are satisfied
   async function init(): Promise<void> {
-    debugger;
-
     await resolve(unnamedModules);
-
     await resolve(namedModules);
 
     let i = namedModulesWithDependencies.length;
@@ -167,12 +165,21 @@ const amdine = (function () {
     }
 
     await resolve(unnamedModulesWithDependencies);
+    loaded = true;
+  }
+
+  async function get(name: string): Promise<Module> {
+    if (!loaded) throw new Error('amdine is not initialized yet');
+    if (name in dependencies) return dependencies[name];
+    throw new Error(`Module ${name} not found`);
   }
 
   //#endregion
 
-  return { define, init };
+  return { define, init, get };
 })();
 
 export default amdine;
 export const define = amdine.define;
+export const init = amdine.init;
+export const get = amdine.get;

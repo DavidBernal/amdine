@@ -66,3 +66,12 @@ define('my-mod', ['state', 'logger'], function (createState, logger) {
 ```
 
 For more examples look examples folder
+
+### Get module resolved
+
+Following last example:
+
+```js
+const state = admine.get('state');
+state; // [state, setState]
+```
